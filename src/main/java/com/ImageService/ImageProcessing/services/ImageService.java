@@ -19,11 +19,14 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,6 +48,8 @@ public class ImageService {
     @Autowired
     private ImageUtil imageUtil;
 
+    public static String[] allowedFormat={"JPG", "JPEG", "PNG", "BMP", "WBMP" , "GIF"};
+
 
 
     public ImageResponse saveImageInDB(MultipartFile file,String url) throws IOException {
@@ -65,6 +70,29 @@ public class ImageService {
 
             return response;
         }
+
+
+    public ImageResponse saveImageInDB(File file,String url) throws IOException {
+
+
+        Path filePath = file.toPath();
+        //Making imageEntity object
+        ImageEntity image =  ImageEntity.builder()
+                .fileName(file.getName())
+                .fileSize(file.length())
+                .type(Files.probeContentType(filePath))
+                .url(url)
+                .build();
+
+
+
+        //Saving in db
+        image =   imageRepo.save(image);
+
+        ImageResponse response = this.convertToImageResponse(image);
+
+        return response;
+    }
 
     //Removed user dependency in ImageEntity
 
@@ -180,10 +208,55 @@ public class ImageService {
         }
     }
 
-    public ImageResponse transformImage(ImageResponse image, TransformationRequest.Transformations transformations) throws Exception {
-        imageUtil.convertImage(image.getUrl(),transformations);
+    public ImageResponse changeFormatAndSaveImage(BufferedImage image,String format,String url) throws Exception {
 
-        return image;
+        int counter = 1;
+        if(format!=null)
+        {
+            if(Arrays.stream(allowedFormat).anyMatch(f -> f.equals(format)))
+            {
+                String filename = System.currentTimeMillis()+"_Transformed_"+ counter+++"."+format.toLowerCase();
+                String path = uploadDir+filename;
+                ImageIO.write(image,format,new File(path));
+
+                File newFile = new File(path);
+
+                String fileUrl = "http://localhost:"+serverPort+"/"+uploadDir+ filename;
+
+                ImageResponse response = this.saveImageInDB(newFile,fileUrl);
+
+                return response;
+
+            }
+            else {
+                throw new Exception("Incorrect format type");
+            }
+
+
+
+        }
+        else {
+            String filename = System.currentTimeMillis()+"_Transformed_"+ counter++ +".png";
+            String path = uploadDir+filename;
+            ImageIO.write(image,"PNG",new File(path));
+
+            File newFile = new File(path);
+
+            String fileUrl = "http://localhost:"+serverPort+"/"+uploadDir+ filename;
+
+            ImageResponse response = this.saveImageInDB(newFile,fileUrl);
+
+            return response;
+
+        }
+    }
+
+    public ImageResponse transformImage(ImageResponse image, TransformationRequest.Transformations transformations) throws Exception {
+      BufferedImage transformedImage =  imageUtil.convertImage(image.getUrl(),transformations);
+
+       ImageResponse newImageResponse = this.changeFormatAndSaveImage(transformedImage,transformations.getFormat(),image.getUrl());
+
+        return newImageResponse;
 
     }
 

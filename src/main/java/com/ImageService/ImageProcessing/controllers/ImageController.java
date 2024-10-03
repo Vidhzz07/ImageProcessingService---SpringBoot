@@ -4,6 +4,8 @@ package com.ImageService.ImageProcessing.controllers;
 import com.ImageService.ImageProcessing.dataModels.TransformationRequest;
 import com.ImageService.ImageProcessing.entites.ImageResponse;
 import com.ImageService.ImageProcessing.services.ImageService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ public class ImageController {
 
     @Autowired
     private ImageService imageService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
 
     @PostMapping("/postImage")
@@ -77,10 +80,14 @@ public class ImageController {
     }
 
     @PostMapping("/{id}/transform")
-    public ResponseEntity<?> transformImage(@PathVariable Long id, @RequestBody TransformationRequest transformationRequest)
+    public ResponseEntity<?> transformImage(@PathVariable Long id, @RequestParam(value = "request") String request, @RequestParam(value = "watermarkImageFile",required = false) MultipartFile watermarkImageFile)
     {
         try{
             ImageResponse response = imageService.getImageFromId(id);
+
+            TransformationRequest transformationRequest = objectMapper.readValue(request, TransformationRequest.class);
+
+            transformationRequest.getTransformations().setWatermarkImageFile(watermarkImageFile);
 
           response =   imageService.transformImage(response,transformationRequest.getTransformations());
 

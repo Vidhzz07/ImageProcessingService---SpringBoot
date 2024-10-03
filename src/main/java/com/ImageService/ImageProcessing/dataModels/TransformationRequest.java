@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import org.antlr.v4.runtime.misc.NotNull;
+import org.springframework.web.multipart.MultipartFile;
+
 @Data
 public class TransformationRequest {
 
@@ -14,6 +16,9 @@ public class TransformationRequest {
         private Resize resize;
         private Crop crop;
         private Integer rotate;
+        private String format;
+        private String watermarkText;
+        private MultipartFile watermarkImageFile = null;
         private Filters filters;
     }
 
