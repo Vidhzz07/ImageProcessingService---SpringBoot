@@ -36,6 +36,41 @@ public class ImageUtil {
         return Scalr.apply(img, Scalr.OP_GRAYSCALE);
     }
 
+    public BufferedImage applySepia(BufferedImage image)
+    {
+        int width = image.getWidth(),height = image.getHeight();
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int p = image.getRGB(x, y);
+
+                int a = (p >> 24) & 0xff;
+                int R = (p >> 16) & 0xff;
+                int G = (p >> 8) & 0xff;
+                int B = p & 0xff;
+
+                // calculate newRed, newGreen, newBlue using formula for sepia RGB values
+
+
+                int newRed = (int) (0.393 * R + 0.769 * G + 0.189 * B);
+                int newGreen = (int) (0.349 * R + 0.686 * G + 0.168 * B);
+                int newBlue = (int) (0.272 * R + 0.534 * G + 0.131 * B);
+
+                // check condition for max 255 value
+
+                newRed = newRed<=255?newRed:255;
+                newBlue = newBlue<=255?newBlue:255;
+                newGreen = newGreen<=255?newGreen:255;
+
+                // set new RGB value
+                p = (a << 24) | (R << 16) | (G << 8) | B;
+
+                image.setRGB(x, y, p);
+            }
+        }
+            return image;
+    }
+
 
     public BufferedImage addTextWatermark(BufferedImage image, String text)
     {
@@ -76,6 +111,37 @@ public class ImageUtil {
         return image;
     }
 
+    public BufferedImage flipImage(BufferedImage image)
+    {
+        Graphics2D g2d = (Graphics2D) image.getGraphics();
+
+        int width = image.getWidth(),height = image.getHeight();
+        int x =image.getMinX() ,y = image.getMinY();
+
+        g2d.drawImage(image, x + width, y, -width, height, null);
+
+        return image;
+
+    }
+
+    public BufferedImage mirrorImage(BufferedImage image)
+    {
+        int width = image.getWidth(),height = image.getHeight();
+        BufferedImage mirrorImage = new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);
+
+        for (int y = 0; y < height; y++) {
+            for (int lx = 0, rx = width - 1; lx < width; lx++, rx--) {
+
+                int p = image.getRGB(lx, y);
+
+                // set mirror image pixel value
+                mirrorImage.setRGB(rx, y, p);
+            }
+        }
+
+        return mirrorImage;
+    }
+
 
 
     public BufferedImage convertImage(String imageUrl, TransformationRequest.Transformations transformations) throws Exception {
@@ -106,11 +172,25 @@ public class ImageUtil {
                  case 4 : {image= rotate(image, Scalr.Rotation.FLIP_VERT);break;}
              }
         }
+        if(transformations.getMirrorImage()==true)
+        {
+            image = this.mirrorImage(image);
+        }
+        if(transformations.getFlipImage()==true)
+        {
+            image=this.flipImage(image);
+        }
+
+
         if(transformations.getFilters()!=null)
         {
             if(transformations.getFilters().getGrayscale()==true)
             {
                 image=applyGrayscale(image);
+            }
+            if(transformations.getFilters().getSepia()==true)
+            {
+                image=this.applySepia(image);
             }
         }
         if(transformations.getWatermarkText()!=null)
@@ -122,31 +202,8 @@ public class ImageUtil {
             image = addImageWatermark(image,transformations.getWatermarkImageFile());
         }
 
+
         return image;
-
-
-        //Formating does not work ,need to check
-
-//        String format = transformations.getFormat();
-//        if(format!=null)
-//        {
-//            if(Arrays.stream(allowedFormat).anyMatch(f -> f.equals(format)))
-//            {
-//
-//                try{
-//                    ImageIO.write(image,format,new File(filePath));
-//                }
-//                catch (Exception e)
-//                {
-//                    e.printStackTrace();
-//                }
-//
-//            }
-//            else throw new Exception("This format is not supported");
-//        }
-//        else {
-//            ImageIO.write(image,"png",new File(filePath));
-//        }
 
 
 

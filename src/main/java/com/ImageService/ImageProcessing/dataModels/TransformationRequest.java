@@ -18,6 +18,8 @@ public class TransformationRequest {
         private Integer rotate;
         private String format;
         private String watermarkText;
+        private Boolean flipImage;
+        private Boolean mirrorImage;
         private MultipartFile watermarkImageFile = null;
         private Filters filters;
     }
@@ -47,5 +49,6 @@ public class TransformationRequest {
     public static class Filters {
         @NonNull
         private Boolean grayscale;
+        private Boolean sepia;
     }
 }
