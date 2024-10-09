@@ -38,3 +38,6 @@ This project is an Image Management System built with Java Spring Boot, featurin
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request to improve the project.
+
+## Project Idea 
+This project is solution to the following project idea https://roadmap.sh/projects/image-processing-service
